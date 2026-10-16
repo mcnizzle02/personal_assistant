@@ -87,6 +87,15 @@ def search_notes(keyword=""):
     return "\n".join(f"#{r['id']} ({r['created_at']}): {r['content']}" for r in rows)
 
 
+
+def delete_note(note_id):
+    with get_connection() as conn:
+        cur = conn.execute("DELETE FROM notes WHERE id = ?", (note_id,))
+    if cur.rowcount == 0:
+        return f"No note with id {note_id}."
+    return f"Deleted note #{note_id}."
+
+
 # ---------- TOOL MENU FOR CLAUDE ----------
 # Claude never sees the Python code above. It only sees these descriptions,
 # so write them clearly. They're how Claude decides which tool to use.
@@ -145,6 +154,17 @@ TOOL_DEFINITIONS = [
             },
         },
     },
+    {
+        "name": "delete_note",
+        "description": "Delete a saved note using its ID number. Search notes first if the ID is unknown.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "note_id": {"type": "integer", "description": "The note's ID number"}
+            },
+            "required": ["note_id"],
+        },
+    },
 ]
 
 # Maps each tool name to the real Python function that does the work
@@ -154,6 +174,7 @@ TOOL_FUNCTIONS = {
     "complete_task": complete_task,
     "save_note": save_note,
     "search_notes": search_notes,
+    "delete_note": delete_note,
 }
 
 
