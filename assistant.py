@@ -1,4 +1,5 @@
 # assistant.py - the chat loop that connects you, Claude, and the tools
+from datetime import datetime
 from dotenv import load_dotenv
 import anthropic
 from tools import setup_database, TOOL_DEFINITIONS, run_tool
@@ -25,11 +26,13 @@ def chat():
             continue
         messages.append({"role": "user", "content": user_input})
 
+        system = SYSTEM_PROMPT + f"\nToday is {datetime.now().strftime('%A, %B %d, %Y, %I:%M %p')}."    
+
         while True:                             # INNER LOOP: keep going while Claude uses tools
             response = client.messages.create(
                 model=MODEL,
                 max_tokens=1024,
-                system=SYSTEM_PROMPT,
+                system=system,
                 tools=TOOL_DEFINITIONS,
                 messages=messages,
             )
