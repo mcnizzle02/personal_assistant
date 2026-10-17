@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 CLIENT_ID = os.getenv("MS_CLIENT_ID")
 AUTHORITY = "https://login.microsoftonline.com/consumers"   # personal accounts only
-SCOPES = ["Mail.Read"]                                      # read-only, least privilege
+SCOPES = ["Mail.Read", "Mail.Send"]                                      # read-only, least privilege
 CACHE_FILE = Path(__file__).parent / "token_cache.json"     # pathlib works on Mac and Windows
 GRAPH = "https://graph.microsoft.com/v1.0"
 
@@ -92,3 +92,22 @@ def get_recent_emails(count=10, unread_only=False):
             "preview": m.get("bodyPreview", ""),
         })
     return emails
+
+def send_email(to, subject, body):
+    """Send a plain-text email from Lee's account. Only the app calls this, never Claude."""
+    token = get_access_token()
+    payload = {
+        "message": {
+            "subject": subject,
+            "body": {"contentType": "Text", "content": body},
+            "toRecipients": [{"emailAddress": {"address": to}}],
+        },
+        "saveToSentItems": True,
+    }
+    resp = requests.post(
+        f"{GRAPH}/me/sendMail",
+        headers={"Authorization": f"Bearer {token}"},
+        json=payload,
+        timeout=30,
+    )
+    resp.raise_for_status()
